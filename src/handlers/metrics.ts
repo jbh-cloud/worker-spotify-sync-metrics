@@ -36,6 +36,19 @@ function getMetricFromDto(dto: SpotifySyncMetricDto, request: IRequest): Spotify
   return metric
 }
 
+export async function getMachineIds (request: IRequest, env: Env) {
+  try {
+    const repo = new MetricsRepo(env)
+    const keys = await repo.listKeys()
+
+    return new Response(JSON.stringify(keys))
+  }
+  catch (e) {
+    request.sentry.captureException(e)
+    return new Response(`error`, {status: 500})
+  }
+}
+
 export async function storeMetrics (request: IRequest, env: Env) {
   try {
     const payload = await request.json<SpotifySyncMetricDto>()

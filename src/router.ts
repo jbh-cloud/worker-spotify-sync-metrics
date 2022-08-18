@@ -1,12 +1,10 @@
 import { Router } from 'itty-router';
-import {getMetrics, getMetricsPerMachine, storeMetrics, deleteMachineMetrics, deleteAllMetrics} from './handlers/metrics';
+import {getMetrics, getMetricsPerMachine, getMachineIds, storeMetrics, deleteMachineMetrics, deleteAllMetrics} from './handlers/metrics';
 import { Env, IRequest} from './interfaces'
 import {requireAuthentication, isAuthenticated} from './auth'
 import Toucan from 'toucan-js';
 import { addSentry } from './sentry';
 
-
-// const router = Router({base: '/api'});
 const router = Router();
 
 router
@@ -30,6 +28,7 @@ router
     )
     .get('/api/metrics/:machineId', async (request: IRequest, env: Env) => getMetricsPerMachine(request, env))
     .get('/api/metrics-all', async (request: IRequest, env: Env) => getMetrics(request, env))
+    .get('/api/machine-ids', async (request: IRequest, env: Env) => getMachineIds(request, env))
 
     .post('/api/metrics', async (request: IRequest, env: Env) => storeMetrics(request, env))
 

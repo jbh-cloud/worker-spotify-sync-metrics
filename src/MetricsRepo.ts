@@ -7,6 +7,20 @@ export class MetricsRepo {
         this.namespace = env.METRICS
     }
 
+    async listKeys(): Promise<string[]> {
+        console.log(`Getting all KV Keys`)
+        let keys = []
+        let listPage = {list_complete: false, cursor:undefined, keys: [] as any[]} as KVNamespaceListResult<any>
+        while(!listPage.list_complete){
+            listPage = await this.namespace!.list({cursor: listPage.cursor})
+            for(const key of listPage.keys){
+                keys.push(key.name)
+            }
+        }
+
+        return keys
+    }
+
     async add(metric: SpotifySyncMetric) {
         let value = await this.namespace!.get(metric.machineId)
 
@@ -30,15 +44,7 @@ export class MetricsRepo {
     }
 
     async getAll(): Promise<{ [machineId: string]: SpotifySyncMetric[] }> {
-        console.log(`Getting all KV Keys`)
-        let keys = []
-        let listPage = {list_complete: false, cursor:undefined, keys: [] as any[]} as KVNamespaceListResult<any>
-        while(!listPage.list_complete){
-            listPage = await this.namespace!.list({cursor: listPage.cursor})
-            for(const key of listPage.keys){
-                keys.push(key.name)
-            }
-        }
+        const keys = await this.listKeys()
 
         let ret = {} as { [machineId: string]: SpotifySyncMetric[] }
         for (const k of keys){

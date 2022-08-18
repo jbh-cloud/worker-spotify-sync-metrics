@@ -1,11 +1,11 @@
 name = "worker-spotify-sync-metrics"
 main = "src/index.ts"
 compatibility_date = "2022-08-03"
-workers_dev = true
+# workers_dev = true
 
-# routes = [
-# 	{ pattern = "api.spotify-sync.jbh.cloud", custom_domain = true }
-# ]
+routes = [
+	{ pattern = "api.spotify-sync.jbh.cloud", custom_domain = true }
+]
 
 [vars]
 METRICS_POST_TIME_INVALIDATOR = 5000
