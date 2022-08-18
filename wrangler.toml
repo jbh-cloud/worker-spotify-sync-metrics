@@ -1,19 +1,19 @@
 name = "worker-spotify-sync-metrics"
 main = "src/index.ts"
 compatibility_date = "2022-08-03"
-# workers_dev = true
+workers_dev = true
 
-routes = [
-	{ pattern = "api.spotify-sync.jbh.cloud", custom_domain = true }
-]
+# routes = [
+# 	{ pattern = "api.spotify-sync.jbh.cloud", custom_domain = true }
+# ]
 
 [vars]
 METRICS_POST_TIME_INVALIDATOR = 5000
 
-
-kv_namespaces = [
-    { binding = "METRICS", id = "d42b0e40bffc4ebf9e1331aa2487a6eb", preview_id = "d42b0e40bffc4ebf9e1331aa2487a6eb"}
-]
+[[kv_namespaces]]
+  binding = "METRICS"
+  id = "d42b0e40bffc4ebf9e1331aa2487a6eb"
+  preview_id = "d42b0e40bffc4ebf9e1331aa2487a6eb"
 
 # The necessary secrets are:
 # - METRICS_POST_APIKEY
