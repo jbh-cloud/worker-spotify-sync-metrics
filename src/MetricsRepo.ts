@@ -7,50 +7,26 @@ export class MetricsRepo {
         this.namespace = env.METRICS
     }
 
+    async add(metric: SpotifySyncMetric) {
+        let value = await this.namespace!.get(metric.machineId)
 
-    async add(metric: SpotifySyncMetric): Promise<boolean> {
-        try {
-            let value = await this.namespace!.get(metric.machineId)
-
-            let data: SpotifySyncMetric[] = []
-            if (value != null){
-                data = JSON.parse(value) as SpotifySyncMetric[]
-            }
-            data.push(metric)
-            value = JSON.stringify(data)
-
-            await this.namespace!.put(metric.machineId, value)//, {metadata: product})
+        let data: SpotifySyncMetric[] = []
+        if (value != null){
+            data = JSON.parse(value) as SpotifySyncMetric[]
         }
-        catch (e) {
-            console.log(`Failed add metric for machine "${metric.machineId}", error: "${e}"`)
-            return false
-        }
+        data.push(metric)
+        value = JSON.stringify(data)
 
-        return true
+        await this.namespace!.put(metric.machineId, value)
     }
 
-
-    async get(machineId: string): Promise<SpotifySyncMetric[] | null> {
-        try {
-            const { value, metadata } = await this.namespace!.getWithMetadata(machineId, {type: "text"});
-            // Metadata seems to come through as a object anyway?
-            // console.log(`val -> "${value}" - meta -> "${metadata}"`)
-            // if(!metadata){
-            //     console.log(`Failed get product "${sku}", no metadata`)
-            //     return null
-            // }
-
-            if (value == null){
-                console.log(`No data for machineId -> ${machineId}`)
-                return null
-            }
-            return JSON.parse(value) as SpotifySyncMetric[]
-
+    async get(machineId: string): Promise<SpotifySyncMetric[]> {
+        const { value, metadata } = await this.namespace!.getWithMetadata(machineId, {type: "text"});
+        if (value == null){
+            console.log(`No data for machineId -> ${machineId}`)
+            return []
         }
-        catch (e) {
-            console.log(`Failed getting metrics for machineId "${machineId}", error: "${e}"`)
-            return null
-        }
+        return JSON.parse(value) as SpotifySyncMetric[]
     }
 
     async getAll(): Promise<{ [machineId: string]: SpotifySyncMetric[] }> {
@@ -72,36 +48,21 @@ export class MetricsRepo {
                 ret[k] = machineData
         }
 
-
         return ret
     }
 
-    async delete(machineId: string): Promise<boolean> {
-        try{
-            await this.namespace!.delete(machineId)
-            return true
-        }
-        catch (e) {
-            console.log(`deleteAll() failed with exception: ${e}`)
-            return false
-        }
+    async delete(machineId: string) {
+        await this.namespace!.delete(machineId)
     }
 
-    async deleteAll(): Promise<boolean> {
-        try{
-            let listPage = {list_complete: false, cursor:undefined, keys: [] as any[]} as KVNamespaceListResult<any>
-            while(!listPage.list_complete){
-                listPage = await this.namespace!.list({cursor: listPage.cursor})
-                for(const key of listPage.keys){
-                    console.log()
-                    await this.namespace!.delete(key.name)
-                }
+    async deleteAll() {
+        let listPage = {list_complete: false, cursor:undefined, keys: [] as any[]} as KVNamespaceListResult<any>
+        while(!listPage.list_complete) {
+            listPage = await this.namespace!.list({cursor: listPage.cursor})
+            for (const key of listPage.keys) {
+                console.log()
+                await this.namespace!.delete(key.name)
             }
-            return true
-        }
-        catch (e) {
-            console.log(`deleteAll() failed with exception: ${e}`)
-            return false
         }
     }
 }

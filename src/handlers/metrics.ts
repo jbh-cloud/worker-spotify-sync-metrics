@@ -1,4 +1,4 @@
-import {Env, SpotifySyncMetricDto } from '../interfaces'
+import {Env, IRequest, SpotifySyncMetricDto } from '../interfaces'
 import {MetricsRepo} from '../MetricsRepo'
 
 export class SpotifySyncMetric implements SpotifySyncMetricDto {
@@ -17,7 +17,7 @@ export class SpotifySyncMetric implements SpotifySyncMetricDto {
   cfCountry: string = ''
 }
 
-function getMetricFromDto(dto: SpotifySyncMetricDto, request: Request): SpotifySyncMetric {
+function getMetricFromDto(dto: SpotifySyncMetricDto, request: IRequest): SpotifySyncMetric {
   let metric: SpotifySyncMetric =  {
     machineId: dto.machineId,
     runType: dto.runType,
@@ -36,7 +36,7 @@ function getMetricFromDto(dto: SpotifySyncMetricDto, request: Request): SpotifyS
   return metric
 }
 
-export async function storeMetrics (request: Request, env: Env) {
+export async function storeMetrics (request: IRequest, env: Env) {
   try {
     const payload = await request.json<SpotifySyncMetricDto>()
 
@@ -52,51 +52,73 @@ export async function storeMetrics (request: Request, env: Env) {
     console.log(`storeMetrics executionId -> ${metric.executionId}`)
 
     const repo = new MetricsRepo(env)
-    if (await repo.add(metric))
-      return new Response('ok')
-
-    return new Response('Failed adding metric', {status: 500})
+    await repo.add(metric)
+    return new Response('ok')
   }
   catch (e) {
-    return new Response(`${e}`, {status: 500})
+    request.sentry.captureException(e)
+    return new Response(`error`, {status: 500})
   }
 }
 
 
-export async function getMetricsPerMachine(request: Request, env: Env){
-  const machineId = request.url.split("?")[0].split('/').pop()
-  console.log(`machineId -> ${machineId}`)
+export async function getMetricsPerMachine(request: IRequest, env: Env){
+  try{
+    const machineId = request.url.split("?")[0].split('/').pop()
+    console.log(`machineId -> ${machineId}`)
 
-  const repo = new MetricsRepo(env)
-  const metrics = await repo.get(machineId ?? '')
+    const repo = new MetricsRepo(env)
+    const metrics = await repo.get(machineId ?? '')
 
-  return new Response(JSON.stringify(metrics ?? []))
+    return new Response(JSON.stringify(metrics ?? []))
+  }
+  catch (e) {
+    request.sentry.captureException(e)
+    return new Response('error', {status: 500})
+  }
 }
 
 
-export async function getMetrics(request: Request, env: Env){
-  const repo = new MetricsRepo(env)
-  return new Response(JSON.stringify(await repo.getAll()))
+export async function getMetrics(request: IRequest, env: Env){
+  try{
+    const repo = new MetricsRepo(env)
+    return new Response(JSON.stringify(await repo.getAll()))
+  }
+  catch (e) {
+    request.sentry.captureException(e)
+    return new Response('error', {status: 500})
+  }
 }
 
 
-export async function deleteMachineMetrics(request: Request, env: Env){
-  const machineId = request.url.split("?")[0].split('/').pop()
-  console.log(`machineId -> ${machineId}`)
+export async function deleteMachineMetrics(request: IRequest, env: Env){
+  try{
+    const machineId = request.url.split("?")[0].split('/').pop()
+    if (!machineId)
+      return new Response('error', {status: 400})
 
-  const repo = new MetricsRepo(env)
-  if (await repo.delete(machineId ?? ''))
+    console.log(`deleteMachineMetrics() machineId -> ${machineId}`)
+
+    const repo = new MetricsRepo(env)
+    await repo.delete(machineId)
+
     return new Response('ok')
-
-  return new Response(`server failed deleting ${machineId}`, {status: 500})
+  }
+  catch (e) {
+    request.sentry.captureException(e)
+    return new Response('error', {status: 500})
+  }
 }
 
-export async function deleteAllMetrics(request: Request, env: Env){
-  console.log(`deleteAllMetrics() called`)
-
-  const repo = new MetricsRepo(env)
-  if (await repo.deleteAll())
+export async function deleteAllMetrics(request: IRequest, env: Env){
+  try{
+    console.log(`deleteAllMetrics() called`)
+    const repo = new MetricsRepo(env)
+    await repo.deleteAll()
     return new Response('ok')
-
-  return new Response(`server failed deleting all machine metrics`, {status: 500})
+  }
+  catch (e) {
+    request.sentry.captureException(e)
+    return new Response('error', {status: 500})
+  }
 }

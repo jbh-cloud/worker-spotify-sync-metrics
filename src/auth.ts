@@ -10,7 +10,7 @@ export function isAuthenticated(request: IRequest, env: Env): void {
 }
 
 export function isAdminAuthenticated(request: IRequest, env: Env): void {
-    console.log('Inside isAdminAuthenticated ')
+    console.log('isAdminAuthenticated()')
     const { searchParams } = new URL(request.url)
     const apiKey = searchParams.get('apikey')
 
@@ -24,7 +24,7 @@ export function isAdminAuthenticated(request: IRequest, env: Env): void {
 }
 
 export function isReadAuthenticated(request: IRequest, env: Env): void {
-    console.log('Inside isReadAuthenticated')
+    console.log('isReadAuthenticated()')
 
     isAdminAuthenticated(request, env)
     if (request.isAuthenticated)
@@ -37,22 +37,22 @@ export function isReadAuthenticated(request: IRequest, env: Env): void {
         return
     }
 
-    console.log(`isReadAuthenticated apiKey -> ${apiKey}}`)
-    console.log(`isReadAuthenticated env.METRICS_GET_APIKEY -> ${env.METRICS_GET_APIKEY}`)
-    console.log(`isReadAuthenticated matches -> ${apiKey == env.METRICS_GET_APIKEY}`)
+    console.log(`isReadAuthenticated() apiKey -> ${apiKey}}`)
+    console.log(`isReadAuthenticated() env.METRICS_GET_APIKEY -> ${env.METRICS_GET_APIKEY}`)
+    console.log(`isReadAuthenticated() matches -> ${apiKey == env.METRICS_GET_APIKEY}`)
     request.isAuthenticated = (apiKey == env.METRICS_GET_APIKEY)
 }
 
 
 export function requireAuthentication(request: IRequest, env: Env): Response | void {
-    console.log('Inside requireAuthentication')
+    console.log(`requireAuthentication() request.isAuthenticated -> ${request.isAuthenticated}`)
     if (!request.isAuthenticated)
         return new Response('invalid auth', {status: 401})
 }
 
 function validateAdminApiKey(apiKeyIn: string, env: Env): [boolean, string[]] {
-    console.log(`validateAdminApiKey apiKeyIn -> ${apiKeyIn}`)
-    console.log(`validateAdminApiKey env.METRICS_ADMIN_APIKEY -> ${env.METRICS_ADMIN_APIKEY}`)
+    console.log(`validateAdminApiKey() apiKeyIn -> ${apiKeyIn}`)
+    console.log(`validateAdminApiKey() env.METRICS_ADMIN_APIKEY -> ${env.METRICS_ADMIN_APIKEY}`)
 
     // try to validate against normal private apikey
     if (env.METRICS_ADMIN_APIKEY == apiKeyIn)
@@ -63,33 +63,33 @@ function validateAdminApiKey(apiKeyIn: string, env: Env): [boolean, string[]] {
     try{
 
         const decoded = atob(apiKeyIn)
-        console.log(`validateAdminApiKey decoded apikey -> ${decoded}`)
+        console.log(`validateAdminApiKey() decoded apikey -> ${decoded}`)
         const parts = decoded.split('/')
 
         const apiKey = parts[0].replaceAll('+', '-')
-        console.log(`validateAdminApiKey apiKey after replace -> ${apiKey}`)
+        console.log(`validateAdminApiKey() apiKey after replace -> ${apiKey}`)
 
         const requestOutboundDate = parseAsIso8601(parts[1])
 
-        console.log(`validateAdminApiKey requestOutboundDate -> ${requestOutboundDate}`)
-        console.log(`validateAdminApiKey requestInboundDate -> ${requestInboundDate}`)
-        console.log(`validateAdminApiKey requestInboundDateTime -> ${requestInboundDate.getTime()}`)
-        console.log(`validateAdminApiKey requestOutboundDateTime -> ${requestOutboundDate.getTime()}`)
+        console.log(`validateAdminApiKey() requestOutboundDate -> ${requestOutboundDate}`)
+        console.log(`validateAdminApiKey() requestInboundDate -> ${requestInboundDate}`)
+        console.log(`validateAdminApiKey() requestInboundDateTime -> ${requestInboundDate.getTime()}`)
+        console.log(`validateAdminApiKey() requestOutboundDateTime -> ${requestOutboundDate.getTime()}`)
 
         let millisecondDiff = Math.abs(requestInboundDate.getTime() - requestOutboundDate.getTime())
-        console.log(`millisecondDiff -> ${millisecondDiff}`)
+        console.log(`validateAdminApiKey() millisecondDiff -> ${millisecondDiff}`)
 
         // TODO: review delay timeout
-        console.log(`validateAdminApiKey ${millisecondDiff} <= 5000 -> ${millisecondDiff <= 5000}`)
-        console.log(`validateAdminApiKey ${env.METRICS_POST_APIKEY} == ${apiKey} -> ${env.METRICS_POST_APIKEY == apiKey}`)
-        if (millisecondDiff <= 5000 && env.METRICS_POST_APIKEY == apiKey)
+        console.log(`validateAdminApiKey() ${millisecondDiff} <= ${env.METRICS_POST_TIME_INVALIDATOR} -> ${millisecondDiff <= env.METRICS_POST_TIME_INVALIDATOR}`)
+        console.log(`validateAdminApiKey() ${env.METRICS_POST_APIKEY} == ${apiKey} -> ${env.METRICS_POST_APIKEY == apiKey}`)
+        if (millisecondDiff <= env.METRICS_POST_TIME_INVALIDATOR && env.METRICS_POST_APIKEY == apiKey)
             return [true, ['POST']]
 
         return [false, []]
 
     }
     catch (e){
-        //console.log(`Failed validatePostApiKey, exception -> ${e}`)
+        console.log(`Failed validatePostApiKey, exception -> ${e}`)
         return [false, []]
     }
 }

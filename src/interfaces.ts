@@ -1,10 +1,12 @@
+import Toucan from "toucan-js";
 
 export interface Env {
-  METRICS_ADMIN_APIKEY: string;
-  COUNTER: DurableObjectNamespace
   METRICS: KVNamespace
+  METRICS_ADMIN_APIKEY: string
   METRICS_POST_APIKEY: string
   METRICS_GET_APIKEY: string
+  SENTRY_DSN: string
+  METRICS_POST_TIME_INVALIDATOR: number
 }
 
 export interface SpotifySyncMetricDto {
@@ -25,4 +27,5 @@ export interface SpotifySyncMetricDto {
 
 export interface IRequest extends Request {
   isAuthenticated: boolean
+  sentry: Toucan
 }

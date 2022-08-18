@@ -15,6 +15,7 @@
   "dependencies": {
     "is-even": "^1.0.0",
     "itty-durable": "^1.0.0",
-    "itty-router": "^2.6.1"
+    "itty-router": "^2.6.1",
+    "toucan-js": "^2.6.1"
   }
 }
